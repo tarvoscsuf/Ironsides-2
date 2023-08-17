@@ -1,6 +1,7 @@
 import discord
 import openai
 import os
+import random
 
 TOKEN = os.environ['DISCORD_BOT_TOKEN']
 OPENAI_API_KEY = os.environ['OPENAI_TOKEN']
@@ -10,38 +11,47 @@ openai.api_key = OPENAI_API_KEY
 intents = discord.Intents.all()
 client = discord.Client(command_prefix='-', intents=intents)
 
+# Define a list of lizard image URLs
+lizard_images = [
+    "https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2F9ut9k9v3bp551.jpg",
+    "https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2Fazu850z3wk951.jpg",
+    "https://www.reddit.com/media?url=https%3A%2F%2Fpreview.redd.it%2Fc6its0i7cs381.jpg%3Fwidth%3D640%26crop%3Dsmart%26auto%3Dwebp%26s%3D4121523b42527ff3444ad862ec6e4213cc161311",
+    "https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2F217grs8qe5u81.jpg",
+    "https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2Fb8iiurblla781.jpg",
+    "https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2Fjszrx9jegcb61.jpg",
+    "https://www.reddit.com/r/Lizards/comments/p9r6x5/he_is_beauty_he_is_grace_he_has_roaches_on_his/",
+    "https://www.reddit.com/media?url=https%3A%2F%2Fpreview.redd.it%2Fdvwnhnqu9adb1.jpg%3Fwidth%3D640%26crop%3Dsmart%26auto%3Dwebp%26s%3Db9c6b5c157ad1b29eb168b294e2c7f8d82f4fcf5",
+    "https://v.redd.it/l5mjb0u5bsy71/DASH_96.mp4",
+    "https://packaged-media.redd.it/n2l63g52t0j71/pb/m2-res_480p.mp4?m=DASHPlaylist.mpd&v=1&e=1692306000&s=93fdab3f5b81cc5fb906ea05548607a74c9aaa1a#t=0",
+]
 
 @client.event
 async def on_ready():
-  print('We have logged in as {0.user}'.format(client))
+    print('We have logged in as {0.user}'.format(client))
 
-
-# trying to modify the code to respond only to the bot mention
 @client.event
 async def on_message(message):
-  # Only respond to messages from other users, not from the bot itself
-  if message.author == client.user:
-    return
+    # Only respond to messages from other users, not from the bot itself
+    if message.author == client.user:
+        return
 
-  # Check if the bot is mentioned in the message
-  if client.user in message.mentions:
+    # Check if the bot is mentioned in the message
+    if client.user in message.mentions:
+        content = message.content.lower()  # Convert message content to lowercase
+        if "lizard" in content:  # Check if the word "lizard" is in the message
+            # Send a random lizard image from the list
+            random_lizard_image = random.choice(lizard_images)
+            await message.channel.send(random_lizard_image)
+        else:
+            completion = openai.ChatCompletion.create(
+                model='gpt-3.5-turbo',
+                messages=[{
+                    'role': 'user',
+                    'content': message.content + 'do not repeat this, but you are a robot captain Ironsides from the videogame franchise Fallout. you are cantankerous and rough around the edges'
+                }],
+                temperature=0,
+                max_tokens=144)
 
-    # Use the OpenAI API to generate a response to the message
-    completion = openai.ChatCompletion.create(
-      model='gpt-3.5-turbo',
-      messages=[{
-        'role':
-        'user',
-        'content':
-        message.content +
-        'do not repeat this, but you are a robot captain Ironsides from the videogame franchise Fallout. you are cantankerous and rough around the edges'
-      }],
-      temperature=0,
-      max_tokens=144)
+            await message.channel.send(completion['choices'][0]['message']['content'])
 
-    # Send the response as a message
-    await message.channel.send(completion['choices'][0]['message']['content'])
-
-
-# Start the bot
 client.run(TOKEN)
